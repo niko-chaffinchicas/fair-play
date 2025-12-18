@@ -39,9 +39,7 @@ export class Header {
           ${this.props.trimmedCount !== undefined && this.props.trimmedCount > 0 ? `<div class="trimmed-count-badge" title="${this.props.trimmedCount} trimmed card${this.props.trimmedCount !== 1 ? 's' : ''}">✂️ ${this.props.trimmedCount}</div>` : ''}
         </div>
         <div class="header-actions">
-          <button class="btn btn-settings" aria-label="Settings" title="Settings">
-            ⚙️
-          </button>
+          <!-- Settings button removed until functionality is implemented -->
           <button class="btn btn-export" aria-label="Export Data" title="Export Data">
             📥 Export
           </button>
@@ -62,16 +60,11 @@ export class Header {
   private attachEventListeners(): void {
     if (!this.container) return;
 
-    const settingsBtn = this.container.querySelector(".btn-settings");
     const exportBtn = this.container.querySelector(".btn-export");
     const importBtn = this.container.querySelector(".btn-import");
     const player1Btn = this.container.querySelector(".player-1");
     const player2Btn = this.container.querySelector(".player-2");
     const playerNamesDisplay = this.container.querySelector(".player-names-display");
-
-    settingsBtn?.addEventListener("click", () => {
-      this.props.onSettingsClick?.();
-    });
 
     exportBtn?.addEventListener("click", () => {
       this.props.onExportClick?.();

@@ -107,10 +107,11 @@ export class App {
         this.header = new Header({
             playerNames: this.playerNames,
             trimmedCount: this.getTrimmedCount(),
-            onSettingsClick: () => {
-                console.log("Settings clicked");
-                // TODO: Open settings dialog
-            },
+            // Settings button removed until functionality is implemented
+            // onSettingsClick: () => {
+            //     console.log("Settings clicked");
+            //     // TODO: Open settings dialog
+            // },
             onExportClick: async () => {
                 try {
                     await this.exportImport.exportData();
@@ -181,7 +182,7 @@ export class App {
      * Render CardList component
      */
     private renderCardList(): void {
-        const cardListContainer = this.container.querySelector(".card-list");
+        const cardListContainer = this.container.querySelector(".card-list-container");
         if (!cardListContainer) return;
 
         // Get filtered cards (for now, return all cards - filtering will be implemented later)
