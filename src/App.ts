@@ -11,9 +11,11 @@ import { CardList } from "./components/CardList.js";
 import { TrimmedCardsSection } from "./components/TrimmedCardsSection.js";
 import { CardDetails } from "./components/CardDetails.js";
 import { PlayerNameEditor } from "./components/PlayerNameEditor.js";
+import { ExportImport } from "./components/ExportImport.js";
 import { AppState } from "./state/appState.js";
 import { saveCardAssignment, saveCardNotes, saveCardTrimmed } from "./utils/db.js";
-import { setPlayerNames } from "./utils/storage.js";
+import { setPlayerNames, getPlayerNames } from "./utils/storage.js";
+import { loadAllCardData } from "./utils/data.js";
 
 export interface AppProps {
     cards: Card[];
@@ -31,6 +33,7 @@ export class App {
     private cardList: CardList | null = null;
     private trimmedCardsSection: TrimmedCardsSection | null = null;
     private cardDetails: CardDetails | null = null;
+    private exportImport: ExportImport;
 
     constructor(props: AppProps) {
         this.cards = props.cards;
@@ -45,6 +48,21 @@ export class App {
         // Subscribe to state changes to update UI
         this.appState.subscribe(() => {
             this.handleStateChange();
+        });
+
+        // Initialize export/import
+        this.exportImport = new ExportImport({
+            onExport: () => {
+                console.log("Data exported successfully");
+            },
+            onImportSuccess: async () => {
+                console.log("Data imported successfully");
+                // Reload all card data and update UI
+                await this.reloadData();
+            },
+            onImportError: (error: string) => {
+                console.error("Import error:", error);
+            },
         });
     }
 
@@ -89,13 +107,16 @@ export class App {
                 console.log("Settings clicked");
                 // TODO: Open settings dialog
             },
-            onExportClick: () => {
-                console.log("Export clicked");
-                // TODO: Implement export functionality
+            onExportClick: async () => {
+                try {
+                    await this.exportImport.exportData();
+                } catch (error) {
+                    console.error("Export failed:", error);
+                    this.exportImport.showErrorMessage("Failed to export data. Please try again.");
+                }
             },
             onImportClick: () => {
-                console.log("Import clicked");
-                // TODO: Implement import functionality
+                this.exportImport.triggerImport();
             },
             onPlayerNamesClick: () => {
                 this.openPlayerNameEditor();
@@ -445,6 +466,32 @@ export class App {
             },
         });
         this.cardDetails.render();
+    }
+
+    /**
+     * Reload all data from storage (used after import)
+     */
+    private async reloadData(): Promise<void> {
+        try {
+            // Reload cards and player names
+            const [newCards, newPlayerNames] = await Promise.all([
+                loadAllCardData(),
+                Promise.resolve(getPlayerNames()),
+            ]);
+
+            // Update app state
+            this.cards = newCards;
+            this.playerNames = newPlayerNames;
+            this.appState.setCards(this.cards);
+            this.appState.setPlayerNames(this.playerNames);
+
+            // Update all UI components
+            this.updatePlayerNames(this.playerNames);
+            this.updateCards(this.cards);
+        } catch (error) {
+            console.error("Failed to reload data:", error);
+            throw error;
+        }
     }
 
     /**

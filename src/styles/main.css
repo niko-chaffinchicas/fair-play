@@ -1032,6 +1032,69 @@ body {
   border-top: 1px solid var(--color-border);
 }
 
+/* Import Confirmation Dialog */
+.import-confirmation-dialog {
+  max-width: 500px;
+}
+
+.import-confirmation-dialog .dialog-body {
+  color: var(--color-text);
+}
+
+.import-confirmation-dialog .dialog-body p {
+  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+}
+
+.import-confirmation-dialog .dialog-body strong {
+  color: var(--color-danger);
+}
+
+/* Message Dialogs */
+.message-dialog {
+  max-width: 400px;
+}
+
+.message-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.message-icon {
+  font-size: var(--font-size-2xl);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.message-text {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+
+.message-success {
+  border-left: 4px solid var(--color-success);
+}
+
+.message-success .message-icon {
+  color: var(--color-success);
+}
+
+.message-error {
+  border-left: 4px solid var(--color-danger);
+}
+
+.message-error .message-icon {
+  color: var(--color-danger);
+}
+
+.message-dialog .dialog-footer {
+  justify-content: center;
+}
+
 /* Card Details Modal */
 .card-details-dialog {
   max-width: 800px;
