@@ -427,6 +427,36 @@ body {
   width: 100%;
 }
 
+/* Card list transition animations */
+.card-list-enter-active,
+.card-list-leave-active {
+  transition: all var(--transition-base);
+}
+
+.card-list-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.card-list-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-list-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-list-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.card-list-move {
+  transition: transform var(--transition-base);
+}
+
 /* ============================================
    Card Component
    ============================================ */

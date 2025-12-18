@@ -8,7 +8,7 @@
     <div class="card-list-header">
       <h2 class="card-list-title">Cards ({{ cards.length }})</h2>
     </div>
-    <div class="card-list-grid">
+    <TransitionGroup name="card-list" tag="div" class="card-list-grid">
       <CardComponent
         v-for="card in cards"
         :key="card.cardName"
@@ -20,12 +20,12 @@
         @notes-change="handleNotesChange"
         @trim-change="handleTrimChange"
       />
-    </div>
+    </TransitionGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, TransitionGroup } from "vue";
 import type { Card, CardAssignment } from "../types/index.js";
 import { useCardsStore } from "../stores/useCardsStore.js";
 import { usePlayerNamesStore } from "../stores/usePlayerNamesStore.js";
@@ -66,4 +66,3 @@ function handleTrimChange(cardName: string, trimmed: boolean): void {
   props.onTrimChange?.(cardName, trimmed);
 }
 </script>
-
