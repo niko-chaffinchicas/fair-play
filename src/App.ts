@@ -76,12 +76,15 @@ export class App {
         <main class="app-main">
           <div class="search-section"></div>
           <div class="filter-section-container"></div>
-          <div class="card-list">
-            <!-- CardList component will go here -->
-            <p>Cards will be displayed here (${this.cards.length} total cards)</p>
-          </div>
+          <div class="card-list-container"></div>
           <div class="trimmed-cards-section-container"></div>
         </main>
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+          <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -91,6 +94,7 @@ export class App {
         this.renderFilterSection();
         this.renderCardList();
         this.renderTrimmedCardsSection();
+        this.updateLoadingState();
     }
 
     /**
@@ -322,6 +326,9 @@ export class App {
     private handleStateChange(): void {
         const filteredCards = this.getFilteredCards();
 
+        // Update loading state
+        this.updateLoadingState();
+
         // Update card list
         if (this.cardList) {
             this.cardList.updateCards(filteredCards);
@@ -334,6 +341,17 @@ export class App {
 
         // Update trimmed count in header
         this.updateTrimmedCount();
+    }
+
+    /**
+     * Update loading overlay visibility based on app state
+     */
+    private updateLoadingState(): void {
+        const loadingOverlay = this.container.querySelector("#loading-overlay") as HTMLElement;
+        if (loadingOverlay) {
+            const isLoading = this.appState.getIsLoading();
+            loadingOverlay.style.display = isLoading ? "flex" : "none";
+        }
     }
 
     /**
@@ -473,6 +491,8 @@ export class App {
      */
     private async reloadData(): Promise<void> {
         try {
+            this.appState.setIsLoading(true);
+
             // Reload cards and player names
             const [newCards, newPlayerNames] = await Promise.all([
                 loadAllCardData(),
@@ -491,6 +511,8 @@ export class App {
         } catch (error) {
             console.error("Failed to reload data:", error);
             throw error;
+        } finally {
+            this.appState.setIsLoading(false);
         }
     }
 
