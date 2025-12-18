@@ -5,24 +5,6 @@
  */
 
 import {
-  openDatabase,
-  getCard,
-  getAllCards,
-  saveCardAssignment,
-  saveCardNotes,
-  saveCardTrimmed,
-  saveCardData,
-  getTrimmedCards,
-  clearAllCards,
-} from "../utils/db.js";
-import type { CardData, CardAssignment } from "../types/index.js";
-
-/**
- * Composable for IndexedDB operations
- * Returns functions for interacting with card data in IndexedDB
- */
-export function useIndexedDB() {
-  return {
     openDatabase,
     getCard,
     getAllCards,
@@ -32,6 +14,23 @@ export function useIndexedDB() {
     saveCardData,
     getTrimmedCards,
     clearAllCards,
-  };
+} from "../utils/db.js";
+
+/**
+ * Composable for IndexedDB operations
+ * Returns functions for interacting with card data in IndexedDB
+ */
+export function useIndexedDB() {
+    return {
+        openDatabase,
+        getCard,
+        getAllCards,
+        saveCardAssignment,
+        saveCardNotes,
+        saveCardTrimmed,
+        saveCardData,
+        getTrimmedCards,
+        clearAllCards,
+    };
 }
 

@@ -75,7 +75,7 @@ export interface PlayerNames {
 export type CategoryFilter =
   | "Magic"
   | "Daily Grind"
-  | "Caregiving"
+  | "Caregving"
   | "Out"
   | "Wild"
   | "Home"

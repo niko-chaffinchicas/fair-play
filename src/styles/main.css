@@ -94,6 +94,7 @@ body {
 
 .app-main {
   flex: 1;
+  width: 100%;
   padding: var(--spacing-md);
   max-width: 100%;
 }
@@ -175,7 +176,15 @@ body {
   background-color: var(--color-surface);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .trimmed-count-badge {
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -187,6 +196,18 @@ body {
   border-radius: var(--radius-full);
   margin-left: var(--spacing-sm);
   white-space: nowrap;
+  border: none;
+  font-family: inherit;
+}
+
+.trimmed-count-badge:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.trimmed-count-badge:active {
+  transform: scale(0.95);
+}
 }
 
 #app-header nav {
@@ -884,6 +905,7 @@ body {
 /* Tablet and up (768px+) */
 @media (min-width: 768px) {
   .app-main {
+    width: 100%;
     padding: var(--spacing-lg);
     max-width: 1200px;
     margin: 0 auto;
