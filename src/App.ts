@@ -8,7 +8,11 @@ import { Header } from "./components/Header.js";
 import { SearchBar } from "./components/SearchBar.js";
 import { FilterSection } from "./components/FilterSection.js";
 import { CardList } from "./components/CardList.js";
-import { saveCardAssignment } from "./utils/db.js";
+import { TrimmedCardsSection } from "./components/TrimmedCardsSection.js";
+import { CardDetails } from "./components/CardDetails.js";
+import { PlayerNameEditor } from "./components/PlayerNameEditor.js";
+import { saveCardAssignment, saveCardNotes, saveCardTrimmed } from "./utils/db.js";
+import { setPlayerNames } from "./utils/storage.js";
 
 export interface AppProps {
     cards: Card[];
@@ -23,6 +27,8 @@ export class App {
     private searchBar: SearchBar | null = null;
     private filterSection: FilterSection | null = null;
     private cardList: CardList | null = null;
+    private trimmedCardsSection: TrimmedCardsSection | null = null;
+    private cardDetails: CardDetails | null = null;
     private selectedCategories: CategoryFilter[] = [];
     private selectedAssignmentStatus: AssignmentStatusFilter[] = [];
     private searchQuery: string = "";
@@ -47,6 +53,7 @@ export class App {
             <!-- CardList component will go here -->
             <p>Cards will be displayed here (${this.cards.length} total cards)</p>
           </div>
+          <div class="trimmed-cards-section-container"></div>
         </main>
       </div>
     `;
@@ -56,6 +63,7 @@ export class App {
         this.renderSearchBar();
         this.renderFilterSection();
         this.renderCardList();
+        this.renderTrimmedCardsSection();
     }
 
     /**
@@ -67,6 +75,7 @@ export class App {
 
         this.header = new Header({
             playerNames: this.playerNames,
+            trimmedCount: this.getTrimmedCount(),
             onSettingsClick: () => {
                 console.log("Settings clicked");
                 // TODO: Open settings dialog
@@ -78,6 +87,9 @@ export class App {
             onImportClick: () => {
                 console.log("Import clicked");
                 // TODO: Implement import functionality
+            },
+            onPlayerNamesClick: () => {
+                this.openPlayerNameEditor();
             },
         });
         this.header.render(headerContainer as HTMLElement);
@@ -155,8 +167,7 @@ export class App {
             cards: filteredCards,
             playerNames: this.playerNames,
             onCardClick: (card: Card) => {
-                console.log("Card clicked:", card.cardName);
-                // TODO: Open card detail view or modal
+                this.openCardDetails(card);
             },
             onAssignmentChange: async (cardName: string, assignment: CardAssignment) => {
                 console.log("Assignment changed:", cardName, assignment);
@@ -173,9 +184,104 @@ export class App {
                     }
                 }
             },
+            onNotesChange: async (cardName: string, notes: string) => {
+                console.log("Notes changed:", cardName, notes.length, "chars");
+                // Save to IndexedDB
+                await saveCardNotes(cardName, notes);
+                // Update local card state
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.notes = notes;
+                    // Update the specific card component to show notes indicator
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                }
+            },
+            onTrimChange: async (cardName: string, trimmed: boolean) => {
+                console.log("Trim changed:", cardName, trimmed);
+                // Save to IndexedDB
+                await saveCardTrimmed(cardName, trimmed);
+                // Update local card state
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.trimmed = trimmed;
+                    // Update the card list if it exists
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                    // Update trimmed cards section
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                    // Update trimmed count in header
+                    this.updateTrimmedCount();
+                }
+            },
             emptyMessage: "No cards match your current filters",
         });
         this.cardList.render(cardListContainer as HTMLElement);
+    }
+
+    /**
+     * Render TrimmedCardsSection component
+     */
+    private renderTrimmedCardsSection(): void {
+        const trimmedContainer = this.container.querySelector(
+            ".trimmed-cards-section-container"
+        );
+        if (!trimmedContainer) return;
+
+        this.trimmedCardsSection = new TrimmedCardsSection({
+            cards: this.cards,
+            playerNames: this.playerNames,
+            onCardClick: (card: Card) => {
+                this.openCardDetails(card);
+            },
+            onAssignmentChange: async (cardName: string, assignment: CardAssignment) => {
+                console.log("Assignment changed:", cardName, assignment);
+                await saveCardAssignment(cardName, assignment);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.assignment = assignment;
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                }
+            },
+            onNotesChange: async (cardName: string, notes: string) => {
+                console.log("Notes changed:", cardName, notes.length, "chars");
+                await saveCardNotes(cardName, notes);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.notes = notes;
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                }
+            },
+            onTrimChange: async (cardName: string, trimmed: boolean) => {
+                console.log("Trim changed:", cardName, trimmed);
+                await saveCardTrimmed(cardName, trimmed);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.trimmed = trimmed;
+                    // Update both card list and trimmed cards section
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                    // Update trimmed count in header
+                    this.updateTrimmedCount();
+                }
+            },
+        });
+        this.trimmedCardsSection.render(trimmedContainer as HTMLElement);
     }
 
     /**
@@ -186,6 +292,22 @@ export class App {
         // For now, return all cards
         // Filtering will be implemented in a later task
         return this.cards;
+    }
+
+    /**
+     * Get count of trimmed cards
+     */
+    private getTrimmedCount(): number {
+        return this.cards.filter((card) => card.trimmed).length;
+    }
+
+    /**
+     * Update trimmed count in header
+     */
+    private updateTrimmedCount(): void {
+        if (this.header) {
+            this.header.updateTrimmedCount(this.getTrimmedCount());
+        }
     }
 
     /**
@@ -209,6 +331,11 @@ export class App {
         } else {
             this.render();
         }
+        if (this.trimmedCardsSection) {
+            this.trimmedCardsSection.updateCards(this.cards);
+        }
+        // Update trimmed count in header
+        this.updateTrimmedCount();
     }
 
     /**
@@ -225,6 +352,114 @@ export class App {
         if (this.cardList) {
             this.cardList.updateProps({ playerNames });
         }
+        if (this.trimmedCardsSection) {
+            this.trimmedCardsSection.updatePlayerNames(playerNames);
+        }
+        if (this.cardDetails) {
+            this.cardDetails.updatePlayerNames(playerNames);
+        }
+    }
+
+    /**
+     * Open player name editor dialog
+     */
+    private openPlayerNameEditor(): void {
+        const editor = new PlayerNameEditor({
+            playerNames: this.playerNames,
+            mode: "dialog",
+            onSave: async (newPlayerNames: PlayerNames) => {
+                // Save to localStorage
+                setPlayerNames(newPlayerNames);
+                // Update app state
+                this.updatePlayerNames(newPlayerNames);
+                console.log("Player names updated:", newPlayerNames);
+            },
+            onCancel: () => {
+                console.log("Player name editing cancelled");
+            },
+        });
+        editor.render();
+    }
+
+    /**
+     * Open card details modal
+     */
+    private openCardDetails(card: Card): void {
+        // Close existing modal if open
+        if (this.cardDetails) {
+            this.cardDetails.destroy();
+        }
+
+        this.cardDetails = new CardDetails({
+            card,
+            playerNames: this.playerNames,
+            onClose: () => {
+                this.cardDetails = null;
+            },
+            onAssignmentChange: async (cardName: string, assignment: CardAssignment) => {
+                console.log("Assignment changed in details:", cardName, assignment);
+                await saveCardAssignment(cardName, assignment);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.assignment = assignment;
+                    // Update the modal
+                    if (this.cardDetails) {
+                        this.cardDetails.updateCard(card);
+                    }
+                    // Update card list and trimmed section
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                }
+            },
+            onNotesChange: async (cardName: string, notes: string) => {
+                console.log("Notes changed in details:", cardName, notes.length, "chars");
+                await saveCardNotes(cardName, notes);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.notes = notes;
+                    // Update the modal
+                    if (this.cardDetails) {
+                        this.cardDetails.updateCard(card);
+                    }
+                    // Update card list and trimmed section
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                }
+            },
+            onTrimChange: async (cardName: string, trimmed: boolean) => {
+                console.log("Trim changed in details:", cardName, trimmed);
+                await saveCardTrimmed(cardName, trimmed);
+                const card = this.cards.find((c) => c.cardName === cardName);
+                if (card) {
+                    card.trimmed = trimmed;
+                    // Update the modal
+                    if (this.cardDetails) {
+                        this.cardDetails.updateCard(card);
+                    }
+                    // Update card list and trimmed section
+                    if (this.cardList) {
+                        const filteredCards = this.getFilteredCards();
+                        this.cardList.updateCards(filteredCards);
+                    }
+                    if (this.trimmedCardsSection) {
+                        this.trimmedCardsSection.updateCards(this.cards);
+                    }
+                    // Update trimmed count
+                    this.updateTrimmedCount();
+                }
+            },
+        });
+        this.cardDetails.render();
     }
 
     /**

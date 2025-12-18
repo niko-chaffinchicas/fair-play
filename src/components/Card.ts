@@ -9,6 +9,8 @@ export interface CardProps {
   card: CardType;
   playerNames: PlayerNames;
   onAssignmentChange?: (cardName: string, assignment: CardAssignment) => void;
+  onNotesChange?: (cardName: string, notes: string) => void;
+  onTrimChange?: (cardName: string, trimmed: boolean) => void;
   onClick?: (card: CardType) => void;
   compact?: boolean; // If true, show compact view (for list/grid)
 }
@@ -16,6 +18,7 @@ export interface CardProps {
 export class Card {
   private container: HTMLElement | null = null;
   private props: CardProps;
+  private notesExpanded: boolean = false;
 
   constructor(props: CardProps) {
     this.props = props;
@@ -91,7 +94,18 @@ export class Card {
             <span class="card-assignment-text">${this.escapeHtml(assignmentDisplayName)}</span>
           </span>
         </div>
-        ${card.notes ? `<div class="card-notes-preview">${this.escapeHtml(card.notes.substring(0, 50))}${card.notes.length > 50 ? "..." : ""}</div>` : ""}
+        <div class="card-actions">
+          <button 
+            type="button" 
+            class="btn btn-trim ${card.trimmed ? "btn-trimmed" : ""}" 
+            data-card-name="${this.escapeHtml(card.cardName)}"
+            aria-label="${card.trimmed ? "Untrim" : "Trim"} card"
+            title="${card.trimmed ? "Click to untrim this card" : "Click to trim this card"}"
+          >
+            ${card.trimmed ? "✂️ Untrim" : "✂️ Trim"}
+          </button>
+        </div>
+        ${this.renderNotesSection(card)}
       </div>
     `;
   }
@@ -132,6 +146,17 @@ export class Card {
             </select>
           </label>
         </div>
+        <div class="card-actions">
+          <button 
+            type="button" 
+            class="btn btn-trim ${card.trimmed ? "btn-trimmed" : ""}" 
+            data-card-name="${this.escapeHtml(card.cardName)}"
+            aria-label="${card.trimmed ? "Untrim" : "Trim"} card"
+            title="${card.trimmed ? "Click to untrim this card" : "Click to trim this card"}"
+          >
+            ${card.trimmed ? "✂️ Untrim" : "✂️ Trim"}
+          </button>
+        </div>
         <div class="card-details">
           <div class="card-section">
             <h4 class="card-section-title">Planning</h4>
@@ -150,7 +175,42 @@ export class Card {
             <p class="card-section-content">${this.formatMultilineText(card.minimumStandardOfCareQuestion)}</p>
           </div>
         </div>
-        ${card.notes ? `<div class="card-notes"><h4>Notes</h4><p>${this.escapeHtml(card.notes)}</p></div>` : ""}
+        ${this.renderNotesSection(card)}
+      </div>
+    `;
+  }
+
+  /**
+   * Render expandable/collapsible notes section
+   */
+  private renderNotesSection(card: CardType): string {
+    const hasNotes = card.notes && card.notes.trim().length > 0;
+    const expandedClass = this.notesExpanded ? "expanded" : "";
+    const cardNameAttr = this.escapeHtml(card.cardName);
+
+    return `
+      <div class="card-notes-section">
+        <button 
+          type="button" 
+          class="card-notes-toggle ${expandedClass}" 
+          data-card-name="${cardNameAttr}"
+          aria-label="${this.notesExpanded ? "Collapse" : "Expand"} notes"
+          aria-expanded="${this.notesExpanded}"
+        >
+          <span class="card-notes-toggle-icon">${this.notesExpanded ? "▼" : "▶"}</span>
+          <span class="card-notes-toggle-text">Notes${hasNotes ? ` (${card.notes.length} chars)` : ""}</span>
+          ${hasNotes ? '<span class="card-notes-indicator" title="Has notes">📝</span>' : ""}
+        </button>
+        <div class="card-notes-content ${expandedClass}" data-card-name="${cardNameAttr}">
+          <textarea 
+            class="card-notes-textarea" 
+            name="notes" 
+            data-card-name="${cardNameAttr}"
+            placeholder="Add notes about this card..."
+            rows="4"
+          >${hasNotes ? this.escapeHtml(card.notes) : ""}</textarea>
+          ${hasNotes && this.props.compact ? `<div class="card-notes-preview-text">${this.escapeHtml(card.notes.substring(0, 100))}${card.notes.length > 100 ? "..." : ""}</div>` : ""}
+        </div>
       </div>
     `;
   }
@@ -264,13 +324,83 @@ export class Card {
     // Card click handler (for opening detail view)
     if (this.props.onClick) {
       this.container.addEventListener("click", (e: MouseEvent) => {
-        // Don't trigger if clicking on the select dropdown
-        if ((e.target as HTMLElement).closest(".card-assignment-select")) {
+        // Don't trigger if clicking on interactive elements
+        if (
+          (e.target as HTMLElement).closest(".card-assignment-select") ||
+          (e.target as HTMLElement).closest(".card-notes-section")
+        ) {
           return;
         }
         this.props.onClick?.(this.props.card);
       });
     }
+
+    // Notes toggle button
+    const notesToggle = this.container.querySelector(
+      ".card-notes-toggle"
+    ) as HTMLButtonElement;
+    if (notesToggle) {
+      notesToggle.addEventListener("click", (e: Event) => {
+        e.stopPropagation();
+        this.toggleNotes();
+      });
+    }
+
+    // Notes textarea changes
+    const notesTextarea = this.container.querySelector(
+      ".card-notes-textarea"
+    ) as HTMLTextAreaElement;
+    if (notesTextarea && this.props.onNotesChange) {
+      let debounceTimer: number | null = null;
+
+      // Save on blur (immediate)
+      notesTextarea.addEventListener("blur", () => {
+        const cardName = notesTextarea.getAttribute("data-card-name");
+        const notes = notesTextarea.value.trim();
+        if (cardName) {
+          this.props.onNotesChange?.(cardName, notes);
+        }
+      });
+
+      // Debounced save on input (after 1 second of no typing)
+      notesTextarea.addEventListener("input", () => {
+        if (debounceTimer !== null) {
+          window.clearTimeout(debounceTimer);
+        }
+        debounceTimer = window.setTimeout(() => {
+          const cardName = notesTextarea.getAttribute("data-card-name");
+          const notes = notesTextarea.value.trim();
+          if (cardName) {
+            this.props.onNotesChange?.(cardName, notes);
+          }
+          debounceTimer = null;
+        }, 1000);
+      });
+    }
+
+    // Trim button
+    const trimBtn = this.container.querySelector(
+      ".btn-trim"
+    ) as HTMLButtonElement;
+    if (trimBtn && this.props.onTrimChange) {
+      trimBtn.addEventListener("click", (e: Event) => {
+        e.stopPropagation();
+        const cardName = trimBtn.getAttribute("data-card-name");
+        if (cardName) {
+          const newTrimmedState = !this.props.card.trimmed;
+          this.props.onTrimChange?.(cardName, newTrimmedState);
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle notes section expanded/collapsed
+   */
+  private toggleNotes(): void {
+    this.notesExpanded = !this.notesExpanded;
+    this.updateHTML();
+    this.attachEventListeners();
   }
 
   /**

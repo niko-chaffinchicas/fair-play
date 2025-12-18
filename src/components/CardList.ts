@@ -11,6 +11,8 @@ export interface CardListProps {
   playerNames: PlayerNames;
   onCardClick?: (card: Card) => void;
   onAssignmentChange?: (cardName: string, assignment: CardAssignment) => void;
+  onNotesChange?: (cardName: string, notes: string) => void;
+  onTrimChange?: (cardName: string, trimmed: boolean) => void;
   emptyMessage?: string;
 }
 
@@ -88,8 +90,10 @@ export class CardList {
         card,
         playerNames: this.props.playerNames,
         compact: true,
-        onCardClick: this.props.onCardClick,
+        onClick: this.props.onCardClick,
         onAssignmentChange: this.props.onAssignmentChange,
+        onNotesChange: this.props.onNotesChange,
+        onTrimChange: this.props.onTrimChange,
       });
 
       cardComponent.render(cardElement);
@@ -102,7 +106,7 @@ export class CardList {
    */
   updateCards(cards: Card[]): void {
     this.props.cards = cards;
-    
+
     // Update existing card components or re-render if needed
     const currentCardNames = new Set(cards.map((c) => c.cardName));
     const existingCardNames = new Set(this.cardComponents.keys());
@@ -138,8 +142,10 @@ export class CardList {
               card,
               playerNames: this.props.playerNames,
               compact: true,
-              onCardClick: this.props.onCardClick,
+              onClick: this.props.onCardClick,
               onAssignmentChange: this.props.onAssignmentChange,
+              onNotesChange: this.props.onNotesChange,
+              onTrimChange: this.props.onTrimChange,
             });
 
             cardComponent.render(cardElement);
