@@ -208,7 +208,6 @@ body {
 .trimmed-count-badge:active {
   transform: scale(0.95);
 }
-}
 
 #app-header nav {
   display: flex;

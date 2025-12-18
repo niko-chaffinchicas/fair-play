@@ -16,11 +16,12 @@ A single-page web application for managing and assigning Fair Play household res
 
 ## Technology Stack
 
+- **Vue 3**: Progressive JavaScript framework with Composition API
 - **TypeScript**: Type-safe JavaScript
+- **Pinia**: State management for Vue
 - **Vite**: Fast build tool and development server
 - **IndexedDB**: Client-side database for card data (via `idb` library)
 - **localStorage**: Client-side storage for player names and preferences
-- **Vanilla JavaScript**: No framework dependencies - pure, lightweight code
 
 ## Prerequisites
 
@@ -62,13 +63,14 @@ A single-page web application for managing and assigning Fair Play household res
 fair-play/
 ├── dist/                 # Build output (generated)
 ├── src/
-│   ├── components/       # UI components
+│   ├── components/       # Vue single-file components (.vue)
+│   ├── composables/      # Vue composables for reusable logic
+│   ├── stores/           # Pinia stores for state management
 │   ├── data/            # Card definitions JSON
-│   ├── state/           # State management
 │   ├── styles/          # CSS stylesheets
 │   ├── types/           # TypeScript type definitions
 │   ├── utils/            # Utility functions (storage, database, data loading)
-│   ├── App.ts           # Main application component
+│   ├── App.vue          # Main application component
 │   └── main.ts          # Application entry point
 ├── index.html           # HTML entry point
 ├── package.json         # Project dependencies and scripts
@@ -169,10 +171,12 @@ The project uses TypeScript for type safety. Type definitions are in `src/types/
 
 ### Adding New Features
 
-1. Create new components in `src/components/`
+1. Create new Vue components in `src/components/` (use `.vue` single-file components)
 2. Add types to `src/types/index.ts` if needed
-3. Integrate components into `src/App.ts`
-4. Update styles in `src/styles/main.css`
+3. Create composables in `src/composables/` for reusable logic
+4. Add Pinia stores in `src/stores/` for state management
+5. Integrate components into `src/App.vue`
+6. Update styles in `src/styles/main.css`
 
 ### Data Structure
 
