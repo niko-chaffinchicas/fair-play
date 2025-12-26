@@ -5,6 +5,7 @@
 
 import { openDB, type IDBPDatabase, type DBSchema } from "idb";
 import type { CardData, CardAssignment } from "../types/index.js";
+import { generateCardId, shouldCardHaveId } from "./cardId.js";
 
 const DB_NAME = "fairPlayCardManager";
 const DB_VERSION = 1;
@@ -58,6 +59,14 @@ async function getOrCreateCardData(
     if (!cardData) {
         cardData = createDefaultCardData(cardName);
     }
+    
+    // Ensure UUID is generated for cards that need one
+    if (shouldCardHaveId(cardName) && !cardData.id) {
+        cardData.id = generateCardId();
+        // Save the UUID immediately
+        await store.put(cardData);
+    }
+    
     return cardData;
 }
 

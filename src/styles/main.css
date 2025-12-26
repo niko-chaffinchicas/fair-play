@@ -1324,6 +1324,28 @@ body {
   transform: scale(0.98);
 }
 
+
+.btn-settings {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-settings:hover {
+  background-color: var(--color-border);
+  border-color: var(--color-primary);
+}
+
+.btn-settings:active {
+  transform: scale(0.98);
+}
+
+/* Toast styles (scoped styles are in Toast.vue, but add any global overrides here if needed) */
+
+/* Settings dialog styles (scoped styles are in Settings.vue, but add any global overrides here if needed) */
+
+/* Merge strategy dialog styles (scoped styles are in MergeStrategyDialog.vue, but add any global overrides here if needed) */
+
 /* ============================================
    Loading States
    ============================================ */

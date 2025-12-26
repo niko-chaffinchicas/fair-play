@@ -26,6 +26,7 @@ export interface CardDefinition {
  */
 export interface CardData {
   cardName: string;
+  id?: string; // UUID for syncing with Google Sheets (excludes CPE/MSC cards)
   assignment: CardAssignment;
   notes: string;
   trimmed: boolean;
@@ -121,4 +122,20 @@ export interface ExportData {
     version: string;
   };
 }
+
+/**
+ * Card data structure for Google Sheets sync
+ */
+export interface GoogleSheetCardData {
+  cardId: string; // UUID
+  cardName: string;
+  assignment: number; // 0=unassigned, 1=player1, 2=player2, 3=shared
+  trimmed: number; // 0=false, 1=true
+  lastUpdated: string; // ISO 8601 timestamp
+}
+
+/**
+ * Merge strategy preference for first-time sheet connection
+ */
+export type MergeStrategy = "use-sheet" | "newer-wins";
 

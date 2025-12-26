@@ -3,7 +3,8 @@
  */
 
 import definitionsData from "../data/definitions.json";
-import { getAllCards } from "./db.js";
+import { getAllCards, saveCardData } from "./db.js";
+import { generateCardId, shouldCardHaveId } from "./cardId.js";
 import type {
   CardDefinition,
   CardData,
@@ -106,6 +107,7 @@ export function initializeDefaultState(definitions: CardDefinition[]): Card[] {
 /**
  * Load all card data (definitions + user data) for the application
  * This is the main function to call on app startup
+ * Ensures UUIDs are generated for cards that need them
  * @returns Array of merged card data ready for use
  */
 export async function loadAllCardData(): Promise<Card[]> {
@@ -115,7 +117,44 @@ export async function loadAllCardData(): Promise<Card[]> {
   // Load user data from IndexedDB
   const userCards = await getAllCards();
 
+  // Ensure UUIDs are generated for cards that need them
+  const cardsNeedingIds = definitions.filter((def) => shouldCardHaveId(def.cardName));
+  const userCardsMap = new Map(userCards.map((card) => [card.cardName, card]));
+  
+  // Generate UUIDs for cards that need them but don't have one
+  const uuidPromises: Promise<void>[] = [];
+  for (const definition of cardsNeedingIds) {
+    const userCard = userCardsMap.get(definition.cardName);
+    if (!userCard || !userCard.id) {
+      // Generate UUID and save it
+      const newId = generateCardId();
+      uuidPromises.push(
+        saveCardData(definition.cardName, { id: newId })
+      );
+      // Update the map so the UUID is available immediately
+      if (userCard) {
+        userCard.id = newId;
+      } else {
+        userCardsMap.set(definition.cardName, {
+          cardName: definition.cardName,
+          id: newId,
+          assignment: "unassigned",
+          notes: "",
+          trimmed: false,
+        });
+      }
+    }
+  }
+  
+  // Wait for all UUIDs to be saved
+  if (uuidPromises.length > 0) {
+    await Promise.all(uuidPromises);
+    // Reload cards to get the updated UUIDs
+    const updatedCards = await getAllCards();
+    return mergeCardData(definitions, updatedCards);
+  }
+
   // Merge them together
-  return mergeCardData(definitions, userCards);
+  return mergeCardData(definitions, Array.from(userCardsMap.values()));
 }
 

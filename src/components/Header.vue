@@ -81,6 +81,24 @@
       >
         📤 Import
       </button>
+      <button
+        v-if="canSync || isSyncing"
+        class="btn btn-export"
+        :disabled="isSyncing"
+        aria-label="Sync with Google Sheet"
+        :title="isSyncing ? 'Syncing...' : 'Sync with Google Sheet'"
+        @click="handleSyncClick"
+      >
+        {{ isSyncing ? "Syncing..." : "🔄 Sync" }}
+      </button>
+      <button
+        class="btn btn-settings"
+        aria-label="Settings"
+        title="Settings"
+        @click="handleSettingsClick"
+      >
+        ⚙️ Settings
+      </button>
     </div>
   </header>
 </template>
@@ -90,6 +108,7 @@ import { computed } from "vue";
 import { usePlayerNamesStore } from "../stores/usePlayerNamesStore.js";
 import { useCardsStore } from "../stores/useCardsStore.js";
 import { useFiltersStore } from "../stores/useFiltersStore.js";
+import { useSyncStore } from "../stores/useSyncStore.js";
 import Badge from "./Badge.vue";
 
 interface Props {
@@ -103,17 +122,22 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   "cpe-click": [];
   "msc-click": [];
+  "settings-click": [];
+  "sync-click": [];
 }>();
 
 const playerNamesStore = usePlayerNamesStore();
 const cardsStore = useCardsStore();
 const filtersStore = useFiltersStore();
+const syncStore = useSyncStore();
 
 const playerNames = computed(() => playerNamesStore.playerNames);
 const trimmedCount = computed(() => cardsStore.trimmedCards.length);
 const player1Count = computed(() => cardsStore.player1Count);
 const player2Count = computed(() => cardsStore.player2Count);
 const sharedCount = computed(() => cardsStore.sharedCount);
+const canSync = computed(() => syncStore.canSync);
+const isSyncing = computed(() => syncStore.isSyncing);
 
 function handleExportClick(): void {
   props.onExportClick?.();
@@ -186,5 +210,13 @@ function handleCPEClick(): void {
 
 function handleMSCClick(): void {
   emit("msc-click");
+}
+
+function handleSettingsClick(): void {
+  emit("settings-click");
+}
+
+function handleSyncClick(): void {
+  emit("sync-click");
 }
 </script>
