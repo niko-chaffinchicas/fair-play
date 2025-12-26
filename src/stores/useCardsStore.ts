@@ -11,6 +11,12 @@ import type {
 } from "../types/index.js";
 import { useFiltersStore } from "./useFiltersStore.js";
 
+// Informational cards that should not be assignable
+const INFORMATIONAL_CARDS = [
+    "CONCIEVE. PLAN. EXECUTE.",
+    "MINIMUM STANDARD OF CARE",
+] as const;
+
 export const useCardsStore = defineStore("cards", () => {
     // State
     const cards: Ref<Card[]> = ref([]);
@@ -22,6 +28,11 @@ export const useCardsStore = defineStore("cards", () => {
     // Computed: Filtered cards based on current filter state
     const filteredCards: ComputedRef<Card[]> = computed(() => {
         let filtered = [...cards.value];
+
+        // Filter out informational cards from main list
+        filtered = filtered.filter(
+            (card) => !INFORMATIONAL_CARDS.includes(card.cardName as typeof INFORMATIONAL_CARDS[number])
+        );
 
         // Filter out trimmed cards unless "trimmed" is in assignment status filters
         const hasTrimmedFilter = filtersStore.assignmentStatus.includes("trimmed");
@@ -92,6 +103,27 @@ export const useCardsStore = defineStore("cards", () => {
         return cards.value.filter((card) => card.trimmed);
     });
 
+    // Computed: Get count of untrimmed cards assigned to player1
+    const player1Count: ComputedRef<number> = computed(() => {
+        return cards.value.filter(
+            (card) => !card.trimmed && card.assignment === "player1"
+        ).length;
+    });
+
+    // Computed: Get count of untrimmed cards assigned to player2
+    const player2Count: ComputedRef<number> = computed(() => {
+        return cards.value.filter(
+            (card) => !card.trimmed && card.assignment === "player2"
+        ).length;
+    });
+
+    // Computed: Get count of untrimmed cards assigned to shared
+    const sharedCount: ComputedRef<number> = computed(() => {
+        return cards.value.filter(
+            (card) => !card.trimmed && card.assignment === "shared"
+        ).length;
+    });
+
     // Actions
     function setCards(newCards: Card[]): void {
         cards.value = [...newCards];
@@ -129,6 +161,10 @@ export const useCardsStore = defineStore("cards", () => {
         return cards.value.find((c) => c.cardName === cardName);
     }
 
+    function getInformationalCard(cardName: typeof INFORMATIONAL_CARDS[number]): Card | undefined {
+        return cards.value.find((c) => c.cardName === cardName);
+    }
+
     return {
         // State
         cards,
@@ -136,6 +172,9 @@ export const useCardsStore = defineStore("cards", () => {
         // Computed
         filteredCards,
         trimmedCards,
+        player1Count,
+        player2Count,
+        sharedCount,
         // Actions
         setCards,
         setIsLoading,
@@ -143,6 +182,7 @@ export const useCardsStore = defineStore("cards", () => {
         updateCardNotes,
         updateCardTrimmed,
         getCardByName,
+        getInformationalCard,
     };
 });
 

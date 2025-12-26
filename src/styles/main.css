@@ -129,6 +129,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .player-names span,
@@ -194,10 +195,10 @@ body {
   background-color: var(--color-trimmed);
   color: white;
   border-radius: var(--radius-full);
-  margin-left: var(--spacing-sm);
   white-space: nowrap;
   border: none;
   font-family: inherit;
+  margin-left: var(--spacing-sm);
 }
 
 .trimmed-count-badge:hover {
@@ -1305,6 +1306,21 @@ body {
 }
 
 .btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-info {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-info:hover {
+  background-color: var(--color-border);
+  border-color: var(--color-primary);
+}
+
+.btn-info:active {
   transform: scale(0.98);
 }
 

@@ -1,6 +1,8 @@
 <template>
   <div class="app">
     <Header
+      @cpe-click="handleCPEClick"
+      @msc-click="handleMSCClick"
       @export-click="handleExportClick"
       @import-click="handleImportClick"
       @player-names-click="showPlayerNameEditor = true"
@@ -39,6 +41,7 @@
     <CardDetails
       v-if="selectedCard"
       :card="selectedCard"
+      :read-only="isInformationalCard(selectedCard)"
       @close="selectedCard = null"
       @assignment-change="handleAssignmentChange"
       @notes-change="handleNotesChange"
@@ -62,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, type Ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import type { Card, CardAssignment } from "./types/index.js";
 import { useCardsStore } from "./stores/useCardsStore.js";
 import { usePlayerNamesStore } from "./stores/usePlayerNamesStore.js";
@@ -91,8 +94,19 @@ const showPlayerNameEditor = ref(false);
 const showExportImport = ref(false);
 const exportImportRef = ref<InstanceType<typeof ExportImport> | null>(null);
 
+const INFORMATIONAL_CARDS = [
+  "CONCIEVE. PLAN. EXECUTE.",
+  "MINIMUM STANDARD OF CARE",
+] as const;
+
 const isLoading = computed(() => cardsStore.isLoading);
 const playerNames = computed(() => playerNamesStore.playerNames);
+
+function isInformationalCard(card: Card): boolean {
+  return INFORMATIONAL_CARDS.includes(
+    card.cardName as (typeof INFORMATIONAL_CARDS)[number]
+  );
+}
 
 // Initialize app data
 onMounted(async () => {
@@ -123,10 +137,29 @@ function handleCardClick(card: Card): void {
   selectedCard.value = card;
 }
 
+function handleCPEClick(): void {
+  const cpeCard = cardsStore.getInformationalCard("CONCIEVE. PLAN. EXECUTE.");
+  if (cpeCard) {
+    selectedCard.value = cpeCard;
+  }
+}
+
+function handleMSCClick(): void {
+  const mscCard = cardsStore.getInformationalCard("MINIMUM STANDARD OF CARE");
+  if (mscCard) {
+    selectedCard.value = mscCard;
+  }
+}
+
 function handleAssignmentChange(
   cardName: string,
   assignment: CardAssignment
 ): void {
+  // Don't allow assignment changes for informational cards
+  const card = cardsStore.getCardByName(cardName);
+  if (card && isInformationalCard(card)) {
+    return;
+  }
   // Update in store
   cardsStore.updateCardAssignment(cardName, assignment);
   // Save to IndexedDB
@@ -134,6 +167,11 @@ function handleAssignmentChange(
 }
 
 function handleNotesChange(cardName: string, notes: string): void {
+  // Don't allow notes changes for informational cards
+  const card = cardsStore.getCardByName(cardName);
+  if (card && isInformationalCard(card)) {
+    return;
+  }
   // Update in store
   cardsStore.updateCardNotes(cardName, notes);
   // Save to IndexedDB
@@ -141,6 +179,11 @@ function handleNotesChange(cardName: string, notes: string): void {
 }
 
 function handleTrimChange(cardName: string, trimmed: boolean): void {
+  // Don't allow trim changes for informational cards
+  const card = cardsStore.getCardByName(cardName);
+  if (card && isInformationalCard(card)) {
+    return;
+  }
   // Update in store
   cardsStore.updateCardTrimmed(cardName, trimmed);
   // Save to IndexedDB
@@ -164,7 +207,6 @@ function handleImportClick(): void {
   }, 100);
 }
 
-
 async function handleImportSuccess(): Promise<void> {
   // Reload all data
   await reloadData();
@@ -176,7 +218,9 @@ function handleImportError(error: string): void {
   // Error is already shown in ExportImport component
 }
 
-async function handlePlayerNamesSave(newPlayerNames: typeof playerNames.value): void {
+async function handlePlayerNamesSave(
+  newPlayerNames: typeof playerNames.value
+): Promise<void> {
   // Save to localStorage
   storage.setPlayerNames(newPlayerNames);
   // Update store

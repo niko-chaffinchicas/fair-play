@@ -1,19 +1,18 @@
 <template>
   <Teleport to="body">
-    <div class="dialog-overlay card-details-overlay" @click="handleOverlayClick">
+    <div
+      class="dialog-overlay card-details-overlay"
+      @click="handleOverlayClick"
+    >
       <div class="dialog card-details-dialog" @click.stop>
         <div class="dialog-header">
           <h2 class="dialog-title">{{ card.cardName }}</h2>
-          <button
-            class="dialog-close"
-            aria-label="Close"
-            @click="handleClose"
-          >
+          <button class="dialog-close" aria-label="Close" @click="handleClose">
             ×
           </button>
         </div>
         <div class="dialog-body card-details-body">
-          <div class="card-details-header">
+          <div v-if="!readOnly" class="card-details-header">
             <div class="card-details-categories">
               <span
                 v-for="category in categories"
@@ -24,7 +23,9 @@
               </span>
             </div>
             <div class="card-details-badges">
-              <span v-if="card.trimmed" class="card-trimmed-badge">Trimmed</span>
+              <span v-if="card.trimmed" class="card-trimmed-badge"
+                >Trimmed</span
+              >
               <span
                 :class="[
                   'card-assignment-badge',
@@ -33,12 +34,14 @@
                 :title="assignmentDisplayName"
               >
                 <span class="card-assignment-icon">{{ assignmentIcon }}</span>
-                <span class="card-assignment-text">{{ assignmentDisplayName }}</span>
+                <span class="card-assignment-text">{{
+                  assignmentDisplayName
+                }}</span>
               </span>
             </div>
           </div>
 
-          <div class="card-details-assignment">
+          <div v-if="!readOnly" class="card-details-assignment">
             <label class="card-assignment-label">
               Assignment:
               <select
@@ -54,7 +57,7 @@
             </label>
           </div>
 
-          <div class="card-details-actions">
+          <div v-if="!readOnly" class="card-details-actions">
             <button
               type="button"
               :class="['btn', 'btn-trim', card.trimmed ? 'btn-trimmed' : '']"
@@ -66,32 +69,90 @@
           </div>
 
           <div class="card-details-content">
-            <div class="card-section">
-              <h3 class="card-section-title">Definition</h3>
-              <p class="card-section-content" v-html="formatMultilineText(card.definition)"></p>
-            </div>
+            <template v-if="readOnly">
+              <!-- Read-only mode: display text without headers -->
+              <div v-if="card.definition" class="card-section">
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.definition)"
+                ></p>
+              </div>
+              <div v-if="card.planning" class="card-section">
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.planning)"
+                ></p>
+              </div>
+              <div v-if="card.execution" class="card-section">
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.execution)"
+                ></p>
+              </div>
+              <div v-if="card.minimumStandardOfCare" class="card-section">
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.minimumStandardOfCare)"
+                ></p>
+              </div>
+              <div
+                v-if="card.minimumStandardOfCareQuestion"
+                class="card-section"
+              >
+                <p
+                  class="card-section-content"
+                  v-html="
+                    formatMultilineText(card.minimumStandardOfCareQuestion)
+                  "
+                ></p>
+              </div>
+            </template>
+            <template v-else>
+              <!-- Normal mode: display with headers -->
+              <div v-if="card.definition" class="card-section">
+                <h3 class="card-section-title">Definition</h3>
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.definition)"
+                ></p>
+              </div>
 
-            <div class="card-section">
-              <h3 class="card-section-title">Planning</h3>
-              <p class="card-section-content" v-html="formatMultilineText(card.planning)"></p>
-            </div>
+              <div class="card-section">
+                <h3 class="card-section-title">Planning</h3>
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.planning)"
+                ></p>
+              </div>
 
-            <div class="card-section">
-              <h3 class="card-section-title">Execution</h3>
-              <p class="card-section-content" v-html="formatMultilineText(card.execution)"></p>
-            </div>
+              <div class="card-section">
+                <h3 class="card-section-title">Execution</h3>
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.execution)"
+                ></p>
+              </div>
 
-            <div class="card-section">
-              <h3 class="card-section-title">Minimum Standard of Care</h3>
-              <p class="card-section-content" v-html="formatMultilineText(card.minimumStandardOfCare)"></p>
-            </div>
+              <div class="card-section">
+                <h3 class="card-section-title">Minimum Standard of Care</h3>
+                <p
+                  class="card-section-content"
+                  v-html="formatMultilineText(card.minimumStandardOfCare)"
+                ></p>
+              </div>
 
-            <div class="card-section">
-              <h3 class="card-section-title">Question</h3>
-              <p class="card-section-content" v-html="formatMultilineText(card.minimumStandardOfCareQuestion)"></p>
-            </div>
+              <div class="card-section">
+                <h3 class="card-section-title">Question</h3>
+                <p
+                  class="card-section-content"
+                  v-html="
+                    formatMultilineText(card.minimumStandardOfCareQuestion)
+                  "
+                ></p>
+              </div>
+            </template>
 
-            <div class="card-details-notes">
+            <div v-if="!readOnly" class="card-details-notes">
               <h3 class="card-section-title">Notes</h3>
               <textarea
                 v-model="notesValue"
@@ -117,13 +178,16 @@ import { useDebounce } from "../composables/useDebounce.js";
 
 interface Props {
   card: Card;
+  readOnly?: boolean;
   onClose: () => void;
   onAssignmentChange?: (cardName: string, assignment: CardAssignment) => void;
   onNotesChange?: (cardName: string, notes: string) => void;
   onTrimChange?: (cardName: string, trimmed: boolean) => void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  readOnly: false,
+});
 
 const emit = defineEmits<{
   close: [];
