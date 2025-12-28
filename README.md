@@ -2,6 +2,8 @@
 
 A single-page web application for managing and assigning Fair Play household responsibility cards. This app helps couples or partners organize and track household responsibilities using the Fair Play method.
 
+> **Note**: This application is automatically deployed to GitHub Pages via GitHub Actions on every push to the `main` branch.
+
 ## Features
 
 - **Card Management**: View and manage all Fair Play cards with definitions, planning, execution, and minimum standard of care information
