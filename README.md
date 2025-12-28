@@ -25,31 +25,62 @@ A single-page web application for managing and assigning Fair Play household res
 
 ## Prerequisites
 
-- Node.js (v16 or higher recommended)
-- npm or yarn package manager
+- **Node.js**: v16 or higher (v20 recommended)
+- **npm**: Comes with Node.js, or use yarn/pnpm
 
-## Setup Instructions
+## Local Development Setup
 
-1. **Clone the repository** (or download the project):
+### 1. Clone the Repository
 
-   ```bash
-   git clone <repository-url>
-   cd fair-play
-   ```
+```bash
+git clone <repository-url>
+cd fair-play
+```
 
-2. **Install dependencies**:
+### 2. Install Dependencies
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-3. **Start the development server**:
+This will install all required dependencies including Vue 3, Pinia, Vite, and TypeScript.
 
-   ```bash
-   npm run dev
-   ```
+### 3. Start the Development Server
 
-   The app will be available at `http://localhost:5173` (or the port shown in the terminal).
+```bash
+npm run dev
+```
+
+The development server will start and the app will be available at `http://localhost:5173` (or the port shown in the terminal output).
+
+The dev server includes:
+- **Hot Module Replacement (HMR)**: Changes to your code will automatically reload in the browser
+- **TypeScript compilation**: Type checking and compilation on the fly
+- **Fast refresh**: Vue components update without losing state
+
+### 4. Build for Production
+
+To create a production build:
+
+```bash
+npm run build
+```
+
+This will:
+- Compile TypeScript to JavaScript
+- Bundle and minify assets
+- Output everything to the `dist/` directory
+- Copy `public/` files (like `robots.txt`) to the output
+
+### 5. Preview Production Build
+
+To test the production build locally:
+
+```bash
+npm run preview
+```
+
+This serves the `dist/` directory locally so you can verify the production build works correctly.
 
 ## Build Commands
 
@@ -90,69 +121,43 @@ No data is sent to any server - everything remains private on your device.
 
 ## Deployment
 
-### GitHub Pages Deployment
+### GitHub Pages (Automated)
 
-This project is designed to be deployed as a static site to GitHub Pages. Here's how:
+This project includes a GitHub Actions workflow that automatically deploys to GitHub Pages when you push to the `main` branch.
 
-#### Option 1: Manual Deployment
+#### Initial Setup
+
+1. **Enable GitHub Pages** in your repository:
+   - Go to your repository on GitHub
+   - Navigate to **Settings → Pages**
+   - Under **Source**, select **GitHub Actions**
+   - Save the settings
+
+2. **Push to main branch**:
+   ```bash
+   git push origin main
+   ```
+
+The workflow (`.github/workflows/deploy.yml`) will:
+- Automatically build the project
+- Detect the correct base path (user/organization pages vs project pages)
+- Deploy to GitHub Pages
+- Run on every push to `main` branch
+
+Your site will be available at:
+- **User/Organization pages**: `https://<username>.github.io/`
+- **Project pages**: `https://<username>.github.io/<repository-name>/`
+
+#### Manual Deployment (Alternative)
+
+If you prefer to deploy manually:
 
 1. **Build the project**:
-
    ```bash
    npm run build
    ```
 
-2. **Push the `dist/` directory to the `gh-pages` branch**:
-
-   ```bash
-   # Install gh-pages if needed
-   npm install --save-dev gh-pages
-
-   # Add deploy script to package.json
-   # "deploy": "gh-pages -d dist"
-
-   # Deploy
-   npm run deploy
-   ```
-
-3. **Configure GitHub Pages**:
-   - Go to your repository Settings → Pages
-   - Select the `gh-pages` branch as the source
-   - Save and wait for GitHub to build your site
-   - Your site will be available at `https://<username>.github.io/<repository-name>/`
-
-#### Option 2: Automated Deployment (Recommended)
-
-See the [GitHub Actions Workflow](#github-actions-workflow) section below for automated deployment.
-
-#### Important Notes for GitHub Pages
-
-- **Base Path**: If your repository name is not the root URL, you may need to set a base path in `vite.config.ts`:
-
-  ```typescript
-  export default defineConfig({
-    base: "/your-repo-name/",
-    // ... rest of config
-  });
-  ```
-
-- **404 Handling**: GitHub Pages doesn't support client-side routing by default. Since this is a single-page app, you may want to add a `404.html` that redirects to `index.html`:
-  ```html
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>Fair Play Card Manager</title>
-      <script>
-        sessionStorage.redirect = location.href;
-        location.replace(
-          location.pathname.split("/").slice(0, -1).join("/") + "/index.html"
-        );
-      </script>
-    </head>
-    <body></body>
-  </html>
-  ```
+2. **Deploy the `dist/` directory** to your hosting service of choice
 
 ### Other Static Hosting Services
 
@@ -163,11 +168,34 @@ This project can be deployed to any static hosting service:
 - **Cloudflare Pages**: Connect your repository and deploy
 - **Any web server**: Upload the contents of `dist/` to your web server
 
+**Note**: For project pages on GitHub Pages or other services that use subdirectories, the base path is automatically configured in the GitHub Actions workflow. For manual deployments, you may need to set the `GITHUB_PAGES_BASE` environment variable or update `vite.config.ts` directly.
+
 ## Development
+
+### Development Workflow
+
+1. **Make changes** to files in `src/`
+2. **See changes instantly** in the browser (HMR will reload automatically)
+3. **Check the terminal** for TypeScript errors or build warnings
+4. **Test your changes** in the browser
 
 ### TypeScript
 
 The project uses TypeScript for type safety. Type definitions are in `src/types/index.ts`.
+
+- Type errors will show in the terminal and browser console
+- Use `tsconfig.json` to configure TypeScript settings
+- All `.ts` and `.vue` files are type-checked
+
+### Project Structure
+
+- **Components** (`src/components/`): Vue single-file components (`.vue`)
+- **Composables** (`src/composables/`): Reusable Vue composition functions
+- **Stores** (`src/stores/`): Pinia stores for global state management
+- **Utils** (`src/utils/`): Utility functions (database, storage, etc.)
+- **Types** (`src/types/`): TypeScript type definitions
+- **Styles** (`src/styles/`): Global CSS styles
+- **Data** (`src/data/`): Static data files (card definitions)
 
 ### Adding New Features
 
@@ -177,6 +205,14 @@ The project uses TypeScript for type safety. Type definitions are in `src/types/
 4. Add Pinia stores in `src/stores/` for state management
 5. Integrate components into `src/App.vue`
 6. Update styles in `src/styles/main.css`
+
+### Code Style
+
+- Use TypeScript for all new files
+- Follow Vue 3 Composition API patterns
+- Use Pinia for state management
+- Keep components focused and reusable
+- Add types for all function parameters and return values
 
 ### Data Structure
 
@@ -245,7 +281,7 @@ Before deploying, verify the following:
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
