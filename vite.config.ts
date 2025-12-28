@@ -8,6 +8,10 @@ export default defineConfig({
     assetsDir: "assets",
     emptyOutDir: true,
   },
-  publicDir: false, // We'll handle public assets manually if needed
+  // Base path for GitHub Pages (set to repo name if deploying to project page)
+  // For user/organization pages, set to "/"
+  // For project pages, set to "/repo-name/"
+  base: process.env.GITHUB_PAGES_BASE || "/",
+  publicDir: "public",
 });
 
